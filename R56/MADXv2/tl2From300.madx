@@ -1,0 +1,87 @@
+!
+! Simple madx to start using the new model
+!
+! davide.gamba@cern.ch
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! definition of the lines one wants
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+             inuse.custom = 1;   ! NECESSARY DEFINITION to be able to build
+                                 !  your own line in this file.
+                       en = 140; ! initial energy condition. 
+                                 !   Used for some lines definition 
+                                 !   (changeable later)
+              inuse.linac = 0;   ! not implemented
+                 inuse.ct = 0;
+         inuse.ct.chicane = 0;   ! if to use chicane or drift instead
+                 inuse.dl = 0;   ! if to consider the DL area 
+                                 !   (default is beam passing through DL)
+        inuse.dl.straight = 1;   ! if to modelize straight beam 
+                                 !   (inuse.dl must be = 1).
+         inuse.dl.wiggler = 0;   ! if to use wiggler or drift instead 
+                                 !   (inuse.dl must be = 1)
+               CD.IWHA305 = 0;  ! the current of the wiggler has to be specified 
+                                 !   when building the line!
+inuse.dl.wiggler.matching = 0;   ! if to enable quadrupolar lens matching in 
+                                 !   wiggler (dl.wiggler must be = 1)
+                inuse.tl1 = 0;
+                 inuse.cr = 0;   ! if = 0.1 -> injection and dump to CRM line
+				 ! if = 1 -> half a turn; 2 -> factor 2; 
+                                 !  3 -> factor 3; 4 - factor 4; 
+                                 !  11<=n<=16 is just the ring (no injection)
+                                 !  reproduced n-10 times (so 12 => 2 turns)
+         inuse.cr.wiggler = 0;   ! if to use wiggler or drift instead in CR
+              CR.IWHA350A = 0;   ! the current of the wigglers have to be specified
+                                 !   when building the line!
+              CR.IWHA350B = 0;   ! 
+  inuse.cr.sbendInjection = 1;   ! if to use sbend injection/extraction in CR 
+                                 !   -> this doesn't require PTC!
+                inuse.tl2 = 1;   ! if to use tl2
+                inuse.tbl = 0;   ! not implemented ! going to TBL
+               inuse.tbts = 0;   ! not implemented ! going to TBTS
+           inuse.tl2prime = 0;   ! not implemented ! dumping in tl2prime
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! In order not to have too much output
+option,-echo; ! -info; ! -warn;
+
+
+! define ctf3line
+call, file="elements/ctf3.seqx";
+
+! call nominal currents file
+call, file="elements/nominalcurrents.txt";
+
+!!!!
+! beam definition
+!!!!
+beam,particle=electron,energy=EN/1000., EX=NEX/EN/0.511, EY=NEY/EN/0.511, ET=1/1000, SIGT=0, SIGE=sige;
+
+!!!!
+! define the period to use
+!!!!
+use, period=cc.line.from300;
+
+
+!!!! WORKING SETUP, more or less correct
+!! correcting kicker/quads not to have orbit effects afterawards
+cr.iqfg0120 =        25.23343226 ;
+cr.iqdg0140 =            22.9516 ;
+cr.hds0150corr =    -9.90216733e-05 ;
+cr.hds1050corr =   -9.902167329e-05 ;
+! and adjusted quads
+ct.iqdd0520 =        26.50726787 ;
+ct.iqfd0530 =        21.92802843 ;
+ct.iqfh0610 =        22.20716522 ;
+ct.iqfh0620 =        27.44729341 ;
+ct.iqfh0640 =        15.27644094 ;
+ct.iqdi0650 =        12.26753043 ;
+ct.iqff0660 =        74.91266282 ;
+ct.iqfh0680 =         14.7530923 ;
+ct.iqff0690 =        47.35270766 ;
+
+
+twiss, betx=1, bety=1;
+!value, table(twiss, CTF3$END, DX);
+write, table=twiss, file="twiss";
+

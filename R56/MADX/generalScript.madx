@@ -1,0 +1,20 @@
+!
+! Simple madx to start using the new model
+!
+! davide.gamba@cern.ch
+
+! define ctf3line
+call, file=ctf3.seqx;
+
+! call nominal currents file
+call, file="nominalcurrents.txt";
+
+!!!!
+! beam definition
+!!!!
+beam,particle=electron,energy=EN/1000., EX=NEX/EN/0.511, EY=NEY/EN/0.511, ET=1/1000, SIGT=0, SIGE=sige;
+
+!!!!
+! define the period to use
+!!!!
+use, period=ctf3;

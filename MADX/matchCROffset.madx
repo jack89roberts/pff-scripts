@@ -1,0 +1,92 @@
+! define ctf3line
+call, file="ctf3.seqx";
+
+! call nominal currents file
+call, file="nominalcurrents.txt";
+
+!!!!
+! beam definition
+!!!!
+beam,particle=electron,energy=EN/1000., EX=NEX/EN/0.511, EY=NEY/EN/0.511, ET=1/1000, SIGT=0, SIGE=sige;
+
+!!!!
+! define the period to use
+!!!!
+use, period=ctf3;
+
+initialBETX =    10;
+initialBETY =    1.5;
+initialALFX =    0;
+initialALFY =    0;
+initialX = 0;
+initialPX = 0;
+initialY = 0;
+initialPY = 0;
+initialDeltaP = 0;
+
+select, flag=twiss, clear;
+select, flag=twiss,column=name,s,x,px,dx;
+
+twiss, betx = initialBETX,
+     alfx = initialALFX,
+     bety = initialBETY,
+     alfy = initialALFY,
+     x = initialX,
+     px = initialPX,
+     y = initialY,
+     py = initialPY;
+
+PLOT,HAXIS=S,VAXIS=DX,DY,COLOUR=100;
+write, table=twiss, file="ini.twiss";
+
+!return;
+!!! MATCHING !!!
+
+call, file="matchCROffset.currents";
+
+MATCH, use_macro;
+
+	vary, name=initialX,STEP=1.e-4;
+	vary, name=initialPX,STEP=1.e-4;
+ 
+	m1a: macro = 
+	{
+	twiss, betx = initialBETX,
+	     alfx = initialALFX,
+	     bety = initialBETY,
+	     alfy = initialALFY,
+	     x = initialX,
+	     px = initialPX,
+	     y = initialY,
+	     py = initialPY;
+	};
+
+	constraint,weight=50, expr=table(twiss,CR.BPM0155,x) = matchCR155;
+	constraint,weight=100,expr=table(twiss,CR.BPM0195,x) = matchCR195;
+
+
+	simplex,tolerance:=1e-12, calls:=1000;
+	lmdif,tolerance:=1e-12, calls:=1000;
+	simplex,tolerance:=1e-12, calls:=1000;
+
+ENDMATCH;
+
+title, 'matched';
+twiss, betx = initialBETX,
+     alfx = initialALFX,
+     bety = initialBETY,
+     alfy = initialALFY,
+     x = initialX,
+     px = initialPX,
+     y = initialY,
+     py = initialPY;
+
+write, table=twiss, file="matchedCROffset.twiss";
+PLOT,HAXIS=S,VAXIS=X,Y,COLOUR=100;
+PLOT,HAXIS=S,VAXIS=PX,PY,COLOUR=100;
+
+
+matchResult155 = table(twiss,CR.BPM0155,x)*1000;
+matchResult195 = table(twiss,CR.BPM0195,x)*1000;
+value, matchResult155;
+value, matchResult195;

@@ -1,0 +1,47 @@
+!
+! Simple madx to start using the new model
+!
+! davide.gamba@cern.ch
+
+! define ctf3line
+call, file=ctf3.seqx;
+
+! call nominal currents file
+call, file="nominalcurrents.txt";
+
+!!!!
+! beam definition
+!!!!
+beam,particle=electron,energy=EN/1000., EX=NEX/EN/0.511, EY=NEY/EN/0.511, ET=1/1000, SIGT=0, SIGE=sige;
+
+!!!!
+! define the period to use
+!!!!
+use, period=ctf3;
+
+
+!!! test twiss command from matlab
+
+initialBETX =    10;
+initialBETY =    1.5;
+initialALFX =    0;
+initialALFY =    0;
+initialX = 0;
+initialY = 0;
+initialDeltaP = 0;
+
+select, flag=twiss, clear;
+select, flag=twiss, column=name, s, BETX, ALFX, x, px, dx, BETY, ALFY, y, py, dy,mux,muy, t, pt,re56, t566;
+
+twiss, RMATRIX,SECTORMAP,
+BETX=initialBETX,ALFX=initialALFX,
+BETY=initialBETY,ALFY=initialALFY,
+X=initialX,Y=initialY,
+DELTAP=initialDELTAP;
+
+PLOT,HAXIS=S,VAXIS=DX,DY,COLOUR=100;
+PLOT,HAXIS=S,VAXIS=T,COLOUR=100;
+write, table=twiss, file="ini.twiss";
+
+return;
+

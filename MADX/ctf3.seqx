@@ -1,0 +1,343 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! New MAD-X model of CTF3 machine based on lines definition files
+!
+! At the moment it is only defined:
+!  * ct line (i.e. Frascati chicane and related)
+!  * delay loop
+!  * tl1
+!  * cr
+!  * tl2
+!
+! JUN 2014
+! davide.gamba@cern.ch
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! definition of what one wants
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                       en = 140; ! initial energy condition. Used for some lines definition (changeable later)
+              inuse.linac = 0;   ! not implemented
+                 inuse.ct = 1;
+         inuse.ct.chicane = 1;   ! if to use chicane or drift instead
+                 inuse.dl = 1;   ! if to consider the DL area (default is beam passing through DL)
+        inuse.dl.straight = 1;   ! if to modelize straight beam (inuse.dl must be = 1).
+         inuse.dl.wiggler = 0;   ! if to use wiggler or drift instead (inuse.dl must be = 1)
+inuse.dl.wiggler.matching = 0;   ! if to enable quadrupolar lens matching in wiggler (dl.wiggler must be = 1)
+                inuse.tl1 = 1;
+                 inuse.cr = 1;   ! if = 0.1 -> injection and dump to CRM line
+				 ! if = 1 -> half a turn; 2 -> factor 2; 
+                                 !  3 -> factor 3; 4 - factor 4; 
+                                 !  11<=n<=16 is just the ring (no injection)
+                                 !  reproduced n-10 times (so 12 => 2 turns)
+         inuse.cr.wiggler = 0;   ! if to use wiggler or drift instead in CR
+  inuse.cr.sbendInjection = 1;   ! if to use sbend injection/extraction in CR -> this doesn't require PTC!
+                inuse.tl2 = 1;   ! if to use tl2
+                inuse.tbl = 0;   ! not implemented ! going to TBL
+               inuse.tbts = 0;   ! not implemented ! going to TBTS
+           inuse.tl2prime = 0;   ! not implemented ! dumping in tl2prime
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! In order not to have too much output
+option,-echo; ! -info; ! -warn;
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!! There should be nothing to change after this point  !!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!!!! assembling line
+
+! define markers used
+     begin.linac: marker;
+       end.linac: marker;
+        begin.ct: marker;
+          end.ct: marker;
+        begin.dl: marker;
+ begin.dlwiggler: marker;
+   end.dlwiggler: marker;
+          end.dl: marker;
+       begin.tl1: marker;
+         end.tl1: marker;
+        begin.cr: marker;
+          end.cr: marker;
+       begin.tl2: marker;
+         end.tl2: marker;
+       begin.tbl: marker;
+         end.tbl: marker;
+      begin.tbts: marker;
+        end.tbts: marker;
+!!!
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+print, text="Loading needed seqx files...";
+
+!!!! COMMON VARIABLES !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+print, text="Loading common.seqx";
+call, file="common.seqx";
+
+!!!! LINAC !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+if ( inuse.linac == 1 )
+ {
+   print, text="Setup linac line";
+   print, text="Linac is not yet ported here... sorry";
+   stop;
+   mylinacline: line=(begin.linac,end.linac);
+ }
+else
+ {
+   mylinacline: line=();
+ }
+!!!! CT !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+if ( inuse.ct == 1 )
+ {
+   print, text="Setup ct line";
+   call, file="ct.seqx";
+ }
+
+if ( inuse.ct == 1 )
+ {
+   if ( inuse.ct.chicane == 1 )
+    {
+      myctline: line=(begin.ct, ct.line, end.ct);
+    }
+   else
+    {
+      myctline: line=(begin.ct, ct.line.straightchicane, end.ct);
+    }
+ }
+else
+ {
+   myctline: line=();
+ }
+!!!! DL !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+if ( inuse.dl == 1 )
+ {
+   print, text="Setup dl line";
+   call, file="dl.seqx";
+ }
+if ( inuse.dl == 1 )
+ {
+   if ( inuse.dl.straight == 1 )
+     {
+       mydlline: line=(begin.dl,cd.line.straight,end.dl);
+     }
+   else
+     {
+       if ( inuse.dl.wiggler == 1 )
+         {
+           if (inuse.dl.wiggler.matching == 1)
+             {
+               print, text="I'll try to do quadrupolar components matching of DL wiggler";
+               call, file="dl.wiggler.matching.madx";
+             }
+           mydlline: line=(begin.dl,cd.line.delayed,end.dl);
+         }
+       else
+         {
+           mydlline: line=(begin.dl,cd.line.delayed.nowiggler,end.dl);
+         }
+     }
+ }
+else
+ {
+   mydlline: line=();
+ }
+!!!! TL1 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+if ( inuse.tl1 == 1 )
+ {
+   print, text="Setup tl1 line";
+   call, file="tl1.seqx";
+ }
+if ( inuse.tl1 == 1 )
+ {
+   mytl1line: line=(begin.tl1,ct.tl1line,end.tl1);
+ }
+else
+ {
+   mytl1line: line=();
+ }
+!!!! CR !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+if ( inuse.cr > 0 )
+ {
+   print, text="Setup cr line";
+   call, file="cr.seqx";
+ }
+if ( inuse.cr > 0 )
+ {
+   if ( inuse.cr.sbendInjection > 0 )
+    {
+      print, text="Using SBEND injection in CR.";
+      call, file="cr.SInjection.seqx";
+    }
+}
+if ( inuse.cr > 0 )
+ {
+   if ( inuse.cr.wiggler == 1 )
+     {
+       if (inuse.cr == 0.1) 
+         {
+            mycrline: line=(begin.cr, cr.line.injDumped, end.cr);
+         } 
+       elseif (inuse.cr == 1) 
+         {
+            mycrline: line=(begin.cr, cr.line.halfTurnBypassWithWiggler, end.cr);
+         } 
+       elseif (inuse.cr == 2) 
+         {
+            mycrline: line=(begin.cr, cr.line.factorTwoWithWiggler, end.cr);
+         } 
+       elseif (inuse.cr == 3) 
+         {
+            mycrline: line=(begin.cr, cr.line.factorThreeWithWiggler, end.cr);
+         } 
+       elseif (inuse.cr == 4) 
+         {
+            mycrline: line=(begin.cr, cr.line.factorFourWithWiggler, end.cr);
+         } 
+       elseif (inuse.cr == 11) 
+         {
+            mycrline: line=(begin.cr, cr.line.closedRingWithWiggler,  end.cr);
+         } 
+       elseif (inuse.cr == 12) 
+         {
+            mycrline: line=(begin.cr, 2*cr.line.closedRingWithWiggler,  end.cr);
+         } 
+       elseif (inuse.cr == 13) 
+         {
+            mycrline: line=(begin.cr, 3*cr.line.closedRingWithWiggler,  end.cr);
+         } 
+       elseif (inuse.cr == 14) 
+         {
+            mycrline: line=(begin.cr, 4*cr.line.closedRingWithWiggler,  end.cr);
+         } 
+       elseif (inuse.cr == 15) 
+         {
+            mycrline: line=(begin.cr, 5*cr.line.closedRingWithWiggler,  end.cr);
+         } 
+       elseif (inuse.cr == 16) 
+         {
+            mycrline: line=(begin.cr, 6*cr.line.closedRingWithWiggler,  end.cr);
+         } 
+       else 
+         {
+           print, text="Configuration error inuse.cr value not supported";
+           stop;
+         }
+     }
+   else
+     {
+       if (inuse.cr == 0.1) 
+         {
+            mycrline: line=(begin.cr, cr.line.injDumped, end.cr);
+         } 
+       elseif (inuse.cr == 1) 
+         {
+            mycrline: line=(begin.cr, cr.line.halfTurnBypass, end.cr);
+         } 
+       elseif (inuse.cr == 2) 
+         {
+            mycrline: line=(begin.cr, cr.line.factorTwo, end.cr);
+         } 
+       elseif (inuse.cr == 3) 
+         {
+            mycrline: line=(begin.cr, cr.line.factorThree, end.cr);
+         } 
+       elseif (inuse.cr == 4) 
+         {
+            mycrline: line=(begin.cr, cr.line.factorFour, end.cr);
+         } 
+       elseif (inuse.cr == 11) 
+         {
+            mycrline: line=(begin.cr, cr.line.closedRing,  end.cr);
+         } 
+       elseif (inuse.cr == 12) 
+         {
+            mycrline: line=(begin.cr, 2*cr.line.closedRing,  end.cr);
+         } 
+       elseif (inuse.cr == 13) 
+         {
+            mycrline: line=(begin.cr, 3*cr.line.closedRing,  end.cr);
+         } 
+       elseif (inuse.cr == 14) 
+         {
+            mycrline: line=(begin.cr, 4*cr.line.closedRing,  end.cr);
+         } 
+       elseif (inuse.cr == 15) 
+         {
+            mycrline: line=(begin.cr, 5*cr.line.closedRing,  end.cr);
+         } 
+       elseif (inuse.cr == 16) 
+         {
+            mycrline: line=(begin.cr, 6*cr.line.closedRing,  end.cr);
+         } 
+       else 
+         {
+           print, text="Configuration error inuse.cr value not supported";
+           stop;
+         }
+     }
+ }
+else
+ {
+   mycrline: line=();
+ }
+
+
+!!!! TL2 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+if ( inuse.tl2 == 1 )
+ {
+   print, text="Setup tl2 line";
+   call, file="tl2.seqx";
+ }
+if ( inuse.tl2 == 1 )
+ {
+   mytl2line: line=(begin.tl2, cc.line.tl2, end.tl2);
+ }
+else
+ {
+   mytl2line: line=();
+ }
+
+!!!! CLEX !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+if ( inuse.tbl == 1 )
+ {
+   print, text="...going to tbl";
+   call, file="tbl.seqx";
+   stop;
+ }
+elseif ( inuse.tbts == 1 )
+ {
+   print, text="...going to tbts";
+   call, file="tbts.seqx";
+   stop;
+ }
+! real definition of myclexline
+if ( inuse.tbl == 1 )
+ {
+   myclexline: line=(begin.tbl,end.tbl);
+ }
+elseif ( inuse.tbts == 1 )
+ {
+   myclexline: line=(begin.tbts,end.tbts);
+ }
+else
+ {
+   myclexline: line=();
+ }
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!!!
+! define CTF3
+ctf3: line=(
+  mylinacline,
+  myctline,
+  mydlline,
+  mytl1line,
+  mycrline,
+  mytl2line,
+  myclexline);
+
+backctf3: line=(-ctf3);
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+print, text="CTF3 LINE IS NOW DEFINED AS REQUESTED.";
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

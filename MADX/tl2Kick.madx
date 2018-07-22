@@ -1,0 +1,30 @@
+! define ctf3line
+call, file=ctf3.seqx;
+
+! call nominal currents file
+call, file="nominalcurrents.txt";
+CC.IDHF0765 = 1.5;
+
+!!!!
+! beam definition
+!!!!
+beam,particle=electron,energy=EN/1000., EX=NEX/EN/0.511, EY=NEY/EN/0.511, ET=1/1000, SIGT=0, SIGE=sige;
+
+!!!!
+! define the period to use
+!!!!
+use, period=ctf3;
+
+twiss, betx = 10,
+     alfx = 0.1,
+     bety = 5,
+     alfy = 0.1,
+     x = 0,
+     px = 0,
+     y = 0,
+     py = 0;
+
+PLOT,HAXIS=S,VAXIS=X,Y,COLOUR=100;
+
+SELECT,FLAG=TWISS,column=name,s,t,x,px,y,py,betx,bety,dx,dy;
+write, table=twiss, file="tl2.twiss";
